@@ -156,34 +156,6 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {!number} x
-         * @param {!number} y
-         * @return {?{node:!Node, offset:!number}}
-         */
-        function caretPositionFromPoint(x, y) {
-            var doc = odtDocument.getDOM(),
-                c,
-                result = null;
-
-            if (doc.caretRangeFromPoint) {
-                c = doc.caretRangeFromPoint(x, y);
-                result = {
-                    node: c.startContainer,
-                    offset: c.startOffset
-                };
-            } else if (doc.caretPositionFromPoint) {
-                c = doc.caretPositionFromPoint(x, y);
-                if (c && c.offsetNode) {
-                    result = {
-                        node: c.offsetNode,
-                        offset: c.offset
-                    };
-                }
-            }
-            return result;
-        }
-
-        /**
          * Expands the supplied selection to the nearest word boundaries
          * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
          */
@@ -817,7 +789,7 @@ gui.SessionController = (function () {
                 if (e.shiftKey) {
                     selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
                 } else {
-                    selectionAnchor = caretPositionFromPoint(e.clientX, e.clientY);
+                    selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY);
                 }
             }
         }
@@ -862,7 +834,7 @@ gui.SessionController = (function () {
         }
 
         function updateShadowCursor(e) {
-            var selectionFocus = caretPositionFromPoint(e.clientX, e.clientY),
+            var selectionFocus = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY),
                 selection;
 
             if (selectionAnchor && selectionFocus) {
