@@ -61,7 +61,8 @@ runtime.loadClass("core.DomUtils");
  */
 core.Cursor = function Cursor(document, memberId) {
     "use strict";
-    var cursorns = 'urn:webodf:names:cursor',
+    var self = this,
+        cursorns = 'urn:webodf:names:cursor',
         /**@type{!Element}*/
         cursorNode = document.createElementNS(cursorns, 'cursor'),
         /**@type{!Element}*/
@@ -221,6 +222,7 @@ core.Cursor = function Cursor(document, memberId) {
         }
         recentlyModifiedNodes.forEach(domUtils.normalizeTextNodes);
         recentlyModifiedNodes.length = 0;
+        console.log(self.getSelectedRange());
     };
     /**
      * Remove the cursor from the document tree.
