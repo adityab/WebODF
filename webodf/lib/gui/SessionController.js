@@ -300,22 +300,38 @@ gui.SessionController = (function () {
                 focusNodeInsideCanvas,
                 existingSelection,
                 newSelection,
-                op;
+                op,
+                selectionRange = document.createRange();
 
             if (!selection) {
                 return;
             }
 
-            if (!selection.anchorNode && !selection.focusNode) { // chrome & safari
-                caretPos = caretPositionFromPoint(capturedDetails.clientX, capturedDetails.clientY);
-                if (!caretPos) {
-                    return;
-                }
+            caretPos = caretPositionFromPoint(capturedDetails.clientX, capturedDetails.clientY);
+            if (!caretPos) {
+                return;
+            }
 
+            if (!selection.anchorNode && !selection.focusNode) { // chrome & safari
                 selection.anchorNode = /**@type{!Node}*/(caretPos.container);
                 selection.anchorOffset = caretPos.offset;
                 selection.focusNode = selection.anchorNode;
                 selection.focusOffset = selection.anchorOffset;
+            }
+            console.log(selection);
+            // Webkit/Blink have a bug where sometimes if you click on
+            // an empty element, say a <text:list-item>, the selection
+            // reported is completely wrong, with the clicked container
+            // and offset pair being totally outside the reported selection.
+            // In such cases, we should check for this behavior and
+            // use the computed caretPos as the focus for the selection.
+            selectionRange.setStart(selection.anchorNode, selection.anchorOffset);
+            selectionRange.setEnd(selection.focusNode, selection.focusOffset);
+            if (!domUtils.rangeIntersectsNode(selectionRange, caretPos.container)) {
+                selection.focusNode = caretPos.container;
+                selection.focusOffset = caretPos.offset;
+                selection.anchorNode = selection.focusNode;
+                selection.anchorOffset = selection.focusOffset;
             }
 
             runtime.assert(selection.anchorNode !== null && selection.focusNode !== null, "anchorNode or focusNode is null");
