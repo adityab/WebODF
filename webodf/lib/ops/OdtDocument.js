@@ -192,22 +192,30 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * This takes components of a DOM selection and returns
+     * the closest possible equivalent representation that
+     * a corresponding cursor should have, in terms of
+     * position and length, according to the speficied
+     * rounding rules at each endpoint.
      * @param {!Node} anchorNode
      * @param {!number} anchorOffset
      * @param {!Node} focusNode
      * @param {!number} focusOffset
+     * @param {!boolean=} roundAnchorToNextPosition
+     * @param {!boolean=} roundFocusToNextPosition
      * @returns {{position: !number, length: number}}
      */
     this.convertDomToCursorRange = function (anchorNode, anchorOffset,
-            focusNode, focusOffset) {
+            focusNode, focusOffset,
+            roundAnchorToNextPosition, roundFocusToNextPosition) {
         var point1,
             point2;
 
-        point1 = stepsTranslator.convertDomPointToSteps(anchorNode, anchorOffset);
+        point1 = stepsTranslator.convertDomPointToSteps(anchorNode, anchorOffset, roundAnchorToNextPosition);
         if (anchorNode === focusNode && anchorOffset === focusOffset) {
             point2 = point1;
         } else {
-            point2 = stepsTranslator.convertDomPointToSteps(focusNode, focusOffset);
+            point2 = stepsTranslator.convertDomPointToSteps(focusNode, focusOffset, roundFocusToNextPosition);
         }
 
         return {

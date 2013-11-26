@@ -339,8 +339,11 @@ gui.SessionController = (function () {
                 }
             }
 
+            // Generate a new cursor selection from the validSelection, keeping
+            // it completely contained within the original selection.
             newSelection = odtDocument.convertDomToCursorRange(validSelection.anchorNode, validSelection.anchorOffset,
-                validSelection.focusNode, validSelection.focusOffset);
+                validSelection.focusNode, validSelection.focusOffset,
+                true, false);
             existingSelection = odtDocument.getCursorSelection(inputMemberId);
             if (newSelection.position !== existingSelection.position || newSelection.length !== existingSelection.length) {
                 op = createOpMoveCursor(newSelection.position, newSelection.length, ops.OdtCursor.RangeSelection);
