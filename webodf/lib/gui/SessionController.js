@@ -782,30 +782,6 @@ gui.SessionController = (function () {
             return false;
         }
 
-        /**
-         * Updates a flag indicating whether the mouse down event occurred within the OdfCanvas element.
-         * This is necessary because the mouse-up binding needs to be global in order to handle mouse-up
-         * events that occur when the user releases the mouse button outside the canvas.
-         * This filter limits selection changes to mouse down events that start inside the canvas
-         * @param e
-         */
-        function handleMouseDown(e) {
-            var target = getTarget(e),
-                cursor = odtDocument.getCursor(inputMemberId);
-            clickStartedWithinContainer = target && domUtils.containsNode(odtDocument.getOdfCanvas().getElement(), target);
-            if (cursor && clickStartedWithinContainer) {
-                mouseDownRootFilter = odtDocument.createRootFilter(target);
-                // The click count is only reported on mouse down and up events. It is needed during
-                // mouse move to though to expand to word or paragraph boundaries during drag
-                clickCount = e.detail;
-                if (e.shiftKey) {
-                    selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
-                } else {
-                    selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY);
-                }
-            }
-        }
-
         function selectionToRange(anchorNode, anchorOffset, focusNode, focusOffset) {
             var hasForwardSelection = domUtils.comparePoints(anchorNode, anchorOffset, focusNode, focusOffset) >= 0,
                 range = anchorNode.ownerDocument.createRange();
@@ -838,6 +814,30 @@ gui.SessionController = (function () {
                     }
                     shadowCursor.setSelectedRange(selection.range, selection.hasForwardSelection);
                     odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
+                }
+            }
+        }
+
+        /**
+         * Updates a flag indicating whether the mouse down event occurred within the OdfCanvas element.
+         * This is necessary because the mouse-up binding needs to be global in order to handle mouse-up
+         * events that occur when the user releases the mouse button outside the canvas.
+         * This filter limits selection changes to mouse down events that start inside the canvas
+         * @param e
+         */
+        function handleMouseDown(e) {
+            var target = getTarget(e),
+                cursor = odtDocument.getCursor(inputMemberId);
+            clickStartedWithinContainer = target && domUtils.containsNode(odtDocument.getOdfCanvas().getElement(), target);
+            if (cursor && clickStartedWithinContainer) {
+                mouseDownRootFilter = odtDocument.createRootFilter(target);
+                // The click count is only reported on mouse down and up events. It is needed during
+                // mouse move to though to expand to word or paragraph boundaries during drag
+                clickCount = e.detail;
+                if (e.shiftKey) {
+                    selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
+                } else {
+                    selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY);
                 }
             }
         }
