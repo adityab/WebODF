@@ -102,6 +102,7 @@ gui.SessionController = (function () {
             imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas()),
             shadowCursorIterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
             drawShadowCursorTask,
+            redrawRegionSelectionTask,
             pasteHandler = new gui.PlainTextPasteboard(odtDocument, inputMemberId),
             selectionAnchor;
 
@@ -780,7 +781,7 @@ gui.SessionController = (function () {
         function undo() {
             if (undoManager) {
                 undoManager.moveBackward(1);
-                redrawRegionSelection();
+                redrawRegionSelectionTask.trigger();
                 return true;
             }
 
@@ -793,7 +794,7 @@ gui.SessionController = (function () {
         function redo() {
             if (undoManager) {
                 undoManager.moveForward(1);
-                redrawRegionSelection();
+                redrawRegionSelectionTask.trigger();
                 return true;
             }
 
@@ -938,7 +939,7 @@ gui.SessionController = (function () {
             eventManager.subscribe("contextmenu", handleContextMenu);
 
             // start maintaining the cursor selection now
-            odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, redrawRegionSelection);
+            odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, redrawRegionSelectionTask.trigger);
             odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, updateUndoStack);
 
             op = new ops.OpAddCursor();
@@ -1125,6 +1126,7 @@ gui.SessionController = (function () {
                 keyCode = gui.KeyboardHandler.KeyCode;
 
             drawShadowCursorTask = new core.ScheduledTask(updateShadowCursor, 0);
+            redrawRegionSelectionTask = new core.ScheduledTask(redrawRegionSelection, 0);
 
             // TODO: deselect the currently selected image when press Esc
             // TODO: move the image selection box to next image/frame when press tab on selected image
