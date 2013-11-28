@@ -484,21 +484,28 @@ runtime.loadClass("odf.OdfUtils");
             if (!roundDirection || filter.acceptPosition(iterator) === FILTER_ACCEPT) {
                 return true;
             }
+            console.log('rounding...');
 
             while (iterator.previousPosition()) {
                 if (filter.acceptPosition(iterator) === FILTER_ACCEPT) {
+                    console.log(iterator.container());
                     if (roundDirection(PREVIOUS_STEP, iterator.container(), iterator.unfilteredDomOffset())) {
+                        console.log('accepted PREVIOUS_STEP');
                         return true;
                     }
+                    console.log('rejected PREVIOUS_STEP');
                     break;
                 }
             }
 
             while (iterator.nextPosition()) {
                 if (filter.acceptPosition(iterator) === FILTER_ACCEPT) {
+                    console.log(iterator.container());
                     if (roundDirection(NEXT_STEP, iterator.container(), iterator.unfilteredDomOffset())) {
+                        console.log('accepted NEXT_STEP');
                         return true;
                     }
+                    console.log('rejected NEXT_STEP');
                     break;
                 }
             }

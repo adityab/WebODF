@@ -289,6 +289,15 @@ gui.SessionController = (function () {
             eventManager.focus();
         }
 
+        function createContainmentRounder(container) {
+            return function (steps, node, offset) {
+                if (node === container) {
+                    return true;
+                }
+                return false;
+            };
+        }
+
         /**
          * @param {?{anchorNode: ?Node, anchorOffset: !number, focusNode: ?Node, focusOffset: !number}} selection
          * @param {{detail: !number, clientX: !number, clientY: !number}} capturedDetails
@@ -338,12 +347,11 @@ gui.SessionController = (function () {
                     expandToParagraphBoundaries(validSelection);
                 }
             }
-
             // Generate a new cursor selection from the validSelection, keeping
             // it completely contained within the original selection.
             newSelection = odtDocument.convertDomToCursorRange(validSelection.anchorNode, validSelection.anchorOffset,
                 validSelection.focusNode, validSelection.focusOffset,
-                true, false);
+                createContainmentRounder(validSelection.anchorNode), createContainmentRounder(validSelection.focusNode));
             existingSelection = odtDocument.getCursorSelection(inputMemberId);
             if (newSelection.position !== existingSelection.position || newSelection.length !== existingSelection.length) {
                 op = createOpMoveCursor(newSelection.position, newSelection.length, ops.OdtCursor.RangeSelection);

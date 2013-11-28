@@ -201,21 +201,23 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * @param {!number} anchorOffset
      * @param {!Node} focusNode
      * @param {!number} focusOffset
-     * @param {!boolean=} roundAnchorToNextPosition
-     * @param {!boolean=} roundFocusToNextPosition
+     * @param {function(!number, !Node, !number):!boolean=} anchorRoundDirection
+     * @param {function(!number, !Node, !number):!boolean=} focusRoundDirection
      * @returns {{position: !number, length: number}}
      */
     this.convertDomToCursorRange = function (anchorNode, anchorOffset,
             focusNode, focusOffset,
-            roundAnchorToNextPosition, roundFocusToNextPosition) {
+            anchorRoundDirection, focusRoundDirection) {
         var point1,
             point2;
 
-        point1 = stepsTranslator.convertDomPointToSteps(anchorNode, anchorOffset, roundAnchorToNextPosition);
-        if (anchorNode === focusNode && anchorOffset === focusOffset) {
+        point1 = stepsTranslator.convertDomPointToSteps(anchorNode, anchorOffset, anchorRoundDirection);
+        if (anchorNode === focusNode
+            && anchorOffset === focusOffset
+            && anchorRoundDirection.toString() === focusRoundDirection.toString()) {
             point2 = point1;
         } else {
-            point2 = stepsTranslator.convertDomPointToSteps(focusNode, focusOffset, roundFocusToNextPosition);
+            point2 = stepsTranslator.convertDomPointToSteps(focusNode, focusOffset, focusRoundDirection);
         }
 
         return {
