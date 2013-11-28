@@ -104,7 +104,8 @@ gui.SessionController = (function () {
             drawShadowCursorTask,
             redrawRegionSelectionTask,
             pasteHandler = new gui.PlainTextPasteboard(odtDocument, inputMemberId),
-            selectionAnchor;
+            selectionAnchor,
+            clickCount;
 
         runtime.assert(window !== null,
             "Expected to be run in an environment which has a global window, like a browser.");
@@ -280,7 +281,7 @@ gui.SessionController = (function () {
         function selectRange(range, hasForwardSelection, capturedDetails) {
             var canvasElement = odtDocument.getOdfCanvas().getElement(),
                 validSelection,
-                clickCount = capturedDetails.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup,
+                selectClickCount = capturedDetails.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup,
                 startInsideCanvas,
                 endInsideCanvas,
                 existingSelection,
@@ -295,9 +296,9 @@ gui.SessionController = (function () {
 
             if (startInsideCanvas && endInsideCanvas) {
                 // Expansion behaviour should only occur when double & triple clicking is inside the canvas
-                if (clickCount === 2) {
+                if (selectClickCount === 2) {
                     expandToWordBoundaries(range);
-                } else if (clickCount >= 3) {
+                } else if (selectClickCount >= 3) {
                     expandToParagraphBoundaries(range);
                 }
             }
@@ -794,6 +795,9 @@ gui.SessionController = (function () {
             clickStartedWithinContainer = target && domUtils.containsNode(odtDocument.getOdfCanvas().getElement(), target);
             if (cursor && clickStartedWithinContainer) {
                 mouseDownRootFilter = odtDocument.createRootFilter(target);
+                // The click count is only reported on mouse down and up events. It is needed during
+                // mouse move to though to expand to word or paragraph boundaries during drag
+                clickCount = e.detail;
                 if (e.shiftKey) {
                     selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
                 } else {
@@ -827,6 +831,11 @@ gui.SessionController = (function () {
                 shadowCursorIterator.setUnfilteredPosition(/**@type {!Node}*/(selectionFocus.node), selectionFocus.offset);
                 if (mouseDownRootFilter.acceptPosition(shadowCursorIterator) === FILTER_ACCEPT) {
                     selection = selectionToRange(selectionAnchor.node, selectionAnchor.offset, selectionFocus.node, selectionFocus.offset);
+                    if (clickCount === 2) {
+                        expandToWordBoundaries(selection.range);
+                    } else if (clickCount >= 3) {
+                        expandToParagraphBoundaries(selection.range);
+                    }
                     shadowCursor.setSelectedRange(selection.range, selection.hasForwardSelection);
                     odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
                 }
@@ -871,7 +880,7 @@ gui.SessionController = (function () {
 
         function enqueueShadowCursorUpdate(e) {
             if (clickStartedWithinContainer) {
-                drawShadowCursorTask.trigger({clientX: e.clientX, clientY: e.clientY});
+                drawShadowCursorTask.trigger({detail: e.detail + 1, clientX: e.clientX, clientY: e.clientY});
             }
         }
 
