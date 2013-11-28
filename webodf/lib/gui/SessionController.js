@@ -798,11 +798,16 @@ gui.SessionController = (function () {
             };
         }
 
-        function updateShadowCursor(e) {
+        /**
+         * Update the local virtual cursor
+         * @param {!{clientX: !number, clientY: !number}} e
+         * @param {boolean=} isMouseUp True if update is triggered by a move event
+         */
+        function updateShadowCursor(e, isMouseUp) {
             var selectionFocus = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY),
                 selection;
 
-            if (selectionAnchor && selectionFocus) {
+            if (clickStartedWithinContainer && selectionAnchor && selectionFocus) {
                 imageSelector.clearSelection();
                 shadowCursorIterator.setUnfilteredPosition(/**@type {!Node}*/(selectionFocus.node), selectionFocus.offset);
                 if (mouseDownRootFilter.acceptPosition(shadowCursorIterator) === FILTER_ACCEPT) {
@@ -812,8 +817,34 @@ gui.SessionController = (function () {
                     } else if (clickCount >= 3) {
                         expandToParagraphBoundaries(selection.range);
                     }
-                    shadowCursor.setSelectedRange(selection.range, selection.hasForwardSelection);
-                    odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
+                    // These are various cases that may indicate a drag operation
+                    // - Click count greater than 1 (user is performing word or paragraph selection)
+                    // - Update called by a mouse up event (can't possibly be dragging if mouse is released))
+                    // - Selection is not a collapsed range (can't be dragging if the range has had time to be expanded)
+                    if (clickCount > 1 || isMouseUp || selection.range.collapsed === false) {
+                        shadowCursor.setSelectedRange(selection.range, selection.hasForwardSelection);
+                        odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
+                    }
+                }
+            }
+        }
+
+        /**
+         * In order for drag operations to work, the browser needs to have it's current
+         * selection set. This is called on mouse down to synchronize the user's last selection
+         * to the browser selection
+         * @param {ops.OdtCursor} cursor
+         */
+        function synchronizeWindowSelection(cursor) {
+            var selection = window.getSelection(),
+                range = cursor.getSelectedRange();
+            if (selection.extend) {
+                if (cursor.hasForwardSelection()) {
+                    selection.collapse(range.startContainer, range.startOffset);
+                    selection.extend(range.endContainer, range.endOffset);
+                } else {
+                    selection.collapse(range.endContainer, range.endOffset);
+                    selection.extend(range.startContainer, range.startOffset);
                 }
             }
         }
@@ -834,6 +865,7 @@ gui.SessionController = (function () {
                 // The click count is only reported on mouse down and up events. It is needed during
                 // mouse move to though to expand to word or paragraph boundaries during drag
                 clickCount = e.detail;
+                synchronizeWindowSelection(cursor);
                 if (e.shiftKey) {
                     selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
                 } else {
@@ -843,13 +875,25 @@ gui.SessionController = (function () {
             }
         }
 
+        function handleDragStart() {
+            var cursor = odtDocument.getCursor(inputMemberId);
+            if (cursor) {
+                // Immediately halt further selection operations
+                clickStartedWithinContainer = false;
+                // Firefox will clear and then redraw the selection once the dragging starts
+                // Chrome won't let us do that however, and won't update the screen whilst dragging
+                shadowCursor.setSelectedRange(cursor.getSelectedRange(), cursor.hasForwardSelection());
+                odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
+            }
+        }
+
         function handleMouseClickEvent(event) {
             var target = getTarget(event);
             if (odfUtils.isImage(target) && odfUtils.isCharacterFrame(target.parentNode)) {
                 selectImage(target.parentNode);
             } else if (clickStartedWithinContainer && !imageSelector.isSelectorElement(target)) {
                 drawShadowCursorTask.processRequests(); // Resynchronise the shadow cursor before processing anything else
-                updateShadowCursor(event);
+                updateShadowCursor(event, true);
                 selectRange(shadowCursor.getSelectedRange(), shadowCursor.hasForwardSelection(), event);
             }
             drawShadowCursorTask.cancel();
@@ -871,6 +915,10 @@ gui.SessionController = (function () {
             var target = getTarget(event),
                 annotationNode = null;
 
+            // The window selection is very costly to maintain during large updates
+            // It is not needed for processing mouse and selection events, so is safe to
+            // clear at this point.
+            window.getSelection().removeAllRanges();
             if (target.className === "annotationRemoveButton") {
                 annotationNode = domUtils.getElementsByTagNameNS(target.parentNode, odf.Namespaces.officens, 'annotation')[0];
                 annotationController.removeAnnotation(annotationNode);
@@ -904,6 +952,7 @@ gui.SessionController = (function () {
             eventManager.subscribe("mousemove", enqueueShadowCursorUpdate);
             eventManager.subscribe("mouseup", handleMouseUp);
             eventManager.subscribe("contextmenu", handleContextMenu);
+            eventManager.subscribe("dragstart", handleDragStart);
 
             // start maintaining the cursor selection now
             odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, redrawRegionSelectionTask.trigger);
@@ -948,6 +997,7 @@ gui.SessionController = (function () {
             eventManager.unsubscribe("mousedown", handleMouseDown);
             eventManager.unsubscribe("mouseup", handleMouseUp);
             eventManager.unsubscribe("contextmenu", handleContextMenu);
+            eventManager.unsubscribe("dragstart", handleDragStart);
             odtDocument.getOdfCanvas().getElement().classList.remove("virtualSelections");
         };
 
