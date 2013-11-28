@@ -839,6 +839,7 @@ gui.SessionController = (function () {
                 } else {
                     selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY);
                 }
+                updateShadowCursor(e);
             }
         }
 
