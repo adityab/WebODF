@@ -157,25 +157,14 @@ gui.SessionController = (function () {
 
         /**
          * Expands the supplied selection to the nearest word boundaries
-         * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
+         * @param {!Range} range
          */
-        function expandToWordBoundaries(selection) {
+        function expandToWordBoundaries(range) {
             var alphaNumeric = /[A-Za-z0-9]/,
                 iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
-                isForwardSelection = domUtils.comparePoints(selection.anchorNode, selection.anchorOffset,
-                                                            selection.focusNode, selection.focusOffset) > 0,
-                startPoint, endPoint,
                 currentNode, c;
 
-            if (isForwardSelection) {
-                startPoint = {node: selection.anchorNode, offset: selection.anchorOffset};
-                endPoint = {node: selection.focusNode, offset: selection.focusOffset};
-            } else {
-                startPoint = {node: selection.focusNode, offset: selection.focusOffset};
-                endPoint = {node: selection.anchorNode, offset: selection.anchorOffset};
-            }
-
-            iterator.setUnfilteredPosition(startPoint.node, startPoint.offset);
+            iterator.setUnfilteredPosition(/**@type{!Node}*/(range.startContainer), range.startOffset);
             while (iterator.previousPosition()) {
                 currentNode = iterator.getCurrentNode();
                 if (currentNode.nodeType === Node.TEXT_NODE) {
@@ -186,11 +175,10 @@ gui.SessionController = (function () {
                 } else if (!odfUtils.isTextSpan(currentNode)) {
                     break;
                 }
-                startPoint.node = iterator.container();
-                startPoint.offset = iterator.unfilteredDomOffset();
+                range.setStart(iterator.container(), iterator.unfilteredDomOffset());
             }
 
-            iterator.setUnfilteredPosition(endPoint.node, endPoint.offset);
+            iterator.setUnfilteredPosition(/**@type{!Node}*/(range.endContainer), range.endOffset);
             do {
                 currentNode = iterator.getCurrentNode();
                 if (currentNode.nodeType === Node.TEXT_NODE) {
@@ -202,38 +190,23 @@ gui.SessionController = (function () {
                     break;
                 }
             } while (iterator.nextPosition());
-            endPoint.node = iterator.container();
-            endPoint.offset = iterator.unfilteredDomOffset();
-
-            if (isForwardSelection) {
-                selection.anchorNode = startPoint.node;
-                selection.anchorOffset = startPoint.offset;
-                selection.focusNode = endPoint.node;
-                selection.focusOffset = endPoint.offset;
-            } else {
-                selection.focusNode = startPoint.node;
-                selection.focusOffset = startPoint.offset;
-                selection.anchorNode = endPoint.node;
-                selection.anchorOffset = endPoint.offset;
-            }
+            range.setEnd(iterator.container(), iterator.unfilteredDomOffset());
         }
 
         /**
          * Expands the supplied selection to the nearest paragraph boundaries
-         * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
+         * @param {!Range} range
          */
-        function expandToParagraphBoundaries(selection) {
-            var anchorParagraph = odtDocument.getParagraphElement(selection.anchorNode),
-                focusParagraph = odtDocument.getParagraphElement(selection.focusNode);
+        function expandToParagraphBoundaries(range) {
+            var startParagraph = odtDocument.getParagraphElement(range.startContainer),
+                endParagraph = odtDocument.getParagraphElement(range.endContainer);
 
-            if (anchorParagraph) {
-                selection.anchorNode = anchorParagraph;
-                selection.anchorOffset = 0;
+            if (startParagraph) {
+                range.setStart(startParagraph, 0);
             }
 
-            if (focusParagraph) {
-                selection.focusNode = focusParagraph;
-                selection.focusOffset = focusParagraph.childNodes.length;
+            if (endParagraph) {
+                range.setEnd(endParagraph, endParagraph.childNodes.length);
             }
         }
 
@@ -262,40 +235,59 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {?{anchorNode: ?Node, anchorOffset: !number, focusNode: ?Node, focusOffset: !number}} selection
+         * Derive a selection-type object from the provided cursor
+         * @param {!Range} range
+         * @param {!boolean} hasForwardSelection
+         * @returns {!{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}}
+         */
+        function rangeToSelection(range, hasForwardSelection) {
+            if (hasForwardSelection) {
+                return {
+                    anchorNode: /**@type{!Node}*/(range.startContainer),
+                    anchorOffset: range.startOffset,
+                    focusNode: /**@type{!Node}*/(range.endContainer),
+                    focusOffset: range.endOffset
+                };
+            }
+            return {
+                anchorNode: /**@type{!Node}*/(range.endContainer),
+                anchorOffset: range.endOffset,
+                focusNode: /**@type{!Node}*/(range.startContainer),
+                focusOffset: range.startOffset
+            };
+        }
+        /**
+         * @param {!Range} range
+         * @param {!boolean} hasForwardSelection
          * @param {{detail: !number, clientX: !number, clientY: !number}} capturedDetails
          */
-        function selectRange(selection, capturedDetails) {
+        function selectRange(range, hasForwardSelection, capturedDetails) {
             var canvasElement = odtDocument.getOdfCanvas().getElement(),
                 validSelection,
                 clickCount = capturedDetails.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup,
-                anchorNodeInsideCanvas,
-                focusNodeInsideCanvas,
+                startInsideCanvas,
+                endInsideCanvas,
                 existingSelection,
                 newSelection,
                 op;
 
-            runtime.assert(selection.anchorNode !== null && selection.focusNode !== null, "anchorNode or focusNode is null");
-            validSelection = /**@type {{anchorNode: !Node, anchorOffset: !number,
-                                        focusNode: !Node, focusOffset: !number}}*/(selection);
-
-            anchorNodeInsideCanvas = domUtils.containsNode(canvasElement, validSelection.anchorNode);
-            focusNodeInsideCanvas = domUtils.containsNode(canvasElement, validSelection.focusNode);
-            if (!anchorNodeInsideCanvas && !focusNodeInsideCanvas) {
+            startInsideCanvas = domUtils.containsNode(canvasElement, range.startContainer);
+            endInsideCanvas = domUtils.containsNode(canvasElement, range.endContainer);
+            if (!startInsideCanvas && !endInsideCanvas) {
                 return;
             }
 
-            if (anchorNodeInsideCanvas && focusNodeInsideCanvas) {
+            if (startInsideCanvas && endInsideCanvas) {
                 // Expansion behaviour should only occur when double & triple clicking is inside the canvas
                 if (clickCount === 2) {
-                    expandToWordBoundaries(validSelection);
+                    expandToWordBoundaries(range);
                 } else if (clickCount >= 3) {
-                    expandToParagraphBoundaries(validSelection);
+                    expandToParagraphBoundaries(range);
                 }
             }
 
-            newSelection = odtDocument.convertDomToCursorRange(validSelection.anchorNode, validSelection.anchorOffset,
-                validSelection.focusNode, validSelection.focusOffset);
+            validSelection = rangeToSelection(range, hasForwardSelection);
+            newSelection = odtDocument.convertDomToCursorRange(validSelection);
             existingSelection = odtDocument.getCursorSelection(inputMemberId);
             if (newSelection.position !== existingSelection.position || newSelection.length !== existingSelection.length) {
                 op = createOpMoveCursor(newSelection.position, newSelection.length, ops.OdtCursor.RangeSelection);
@@ -794,29 +786,6 @@ gui.SessionController = (function () {
             }
         }
 
-        /**
-         * Derive a selection-type object from the provided cursor
-         * @param {!gui.ShadowCursor|!ops.OdtCursor} cursor
-         * @returns {!{anchorNode: ?Node, anchorOffset: !number, focusNode: ?Node, focusOffset: !number}}
-         */
-        function cursorToSelection(cursor) {
-            var range = cursor.getSelectedRange();
-            if (cursor.hasForwardSelection()) {
-                return {
-                    anchorNode: range.startContainer,
-                    anchorOffset: range.startOffset,
-                    focusNode: range.endContainer,
-                    focusOffset: range.endOffset
-                };
-            }
-            return {
-                anchorNode: range.endContainer,
-                anchorOffset: range.endOffset,
-                focusNode: range.startContainer,
-                focusOffset: range.startOffset
-            };
-        }
-
         function selectionToRange(anchorNode, anchorOffset, focusNode, focusOffset) {
             var hasForwardSelection = domUtils.comparePoints(anchorNode, anchorOffset, focusNode, focusOffset) >= 0,
                 range = anchorNode.ownerDocument.createRange();
@@ -855,7 +824,7 @@ gui.SessionController = (function () {
             } else if (clickStartedWithinContainer && !imageSelector.isSelectorElement(target)) {
                 drawShadowCursorTask.processRequests(); // Resynchronise the shadow cursor before processing anything else
                 updateShadowCursor(event);
-                selectRange(cursorToSelection(shadowCursor), event);
+                selectRange(shadowCursor.getSelectedRange(), shadowCursor.hasForwardSelection(), event);
             }
             drawShadowCursorTask.cancel();
             clickStartedWithinContainer = false;
