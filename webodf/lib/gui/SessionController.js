@@ -798,13 +798,28 @@ gui.SessionController = (function () {
             };
         }
 
+        function untransformedEventCoordinates(e) {
+            var posx = 0,
+                posy = 0,
+                container = document.getElementById('container'),
+                rect = container.getBoundingClientRect(),
+                zoomLevel = odtDocument.getOdfCanvas().getZoomLevel();
+            posx = rect.width / 2 + (e.clientX - rect.width / 2) / zoomLevel;
+            posy = e.clientY;
+            return {
+                x: posx,
+                y: posy
+            };
+        }
+
         /**
          * Update the local virtual cursor
          * @param {!{clientX: !number, clientY: !number}} e
          * @param {boolean=} isMouseUp True if update is triggered by a move event
          */
         function updateShadowCursor(e, isMouseUp) {
-            var selectionFocus = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY),
+            var coords = untransformedEventCoordinates(e),
+                selectionFocus = domUtils.caretPositionFromPoint(odtDocument.getDOM(), coords.x, coords.y),
                 selection;
 
             if (clickStartedWithinContainer && selectionAnchor && selectionFocus) {
@@ -858,6 +873,7 @@ gui.SessionController = (function () {
          */
         function handleMouseDown(e) {
             var target = getTarget(e),
+                coords = untransformedEventCoordinates(e),
                 cursor = odtDocument.getCursor(inputMemberId);
             clickStartedWithinContainer = target && domUtils.containsNode(odtDocument.getOdfCanvas().getElement(), target);
             if (cursor && clickStartedWithinContainer) {
@@ -869,7 +885,7 @@ gui.SessionController = (function () {
                 if (e.shiftKey) {
                     selectionAnchor = {node: cursor.getAnchorNode(), offset: 0};
                 } else {
-                    selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), e.clientX, e.clientY);
+                    selectionAnchor = domUtils.caretPositionFromPoint(odtDocument.getDOM(), coords.x, coords.y);
                 }
                 updateShadowCursor(e);
             }
