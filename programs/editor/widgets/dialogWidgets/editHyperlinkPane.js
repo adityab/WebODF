@@ -44,7 +44,7 @@ define("webodf/editor/widgets/dialogWidgets/editHyperlinkPane", [
     function (dojo, ContentPane) {
         "use strict";
 
-        var EditHyperlinkPane = function () {
+        var EditHyperlinkPane = function (callback) {
             var self = this,
                 editorBase = dojo.config && dojo.config.paths && dojo.config.paths['webodf/editor'],
                 contentPane,
@@ -68,24 +68,6 @@ define("webodf/editor/widgets/dialogWidgets/editHyperlinkPane", [
                 }
             }
 
-            contentPane = new ContentPane({
-                title: runtime.tr("editLink"),
-                href: editorBase+"/widgets/dialogWidgets/editHyperlinkPane.html",
-                preload: true,
-                onLoad : function () {
-                    form = dijit.byId('editHyperlinkPaneForm');
-                    form.onSubmit = onSave;
-                    dijit.byId('cancelHyperlinkChangeButton').onClick = onCancel;
-                    displayTextField = dijit.byId('linkDisplayText');
-                    runtime.translateContent(form.domNode);
-                    if (initialValue) {
-                        form.set('value', initialValue);
-                        displayTextField.set('disabled', initialValue.isReadOnlyText);
-                        initialValue = undefined;
-                    }
-                }
-            });
-
             this.widget = function () {
                 return contentPane;
             };
@@ -101,6 +83,45 @@ define("webodf/editor/widgets/dialogWidgets/editHyperlinkPane", [
                     displayTextField.set('disabled', value.isReadOnlyText);
                 }
             };
+
+            function init(cb) {
+                require([
+                    "dojo",
+                    "dojo/ready",
+                    "dojo/dom-construct",
+                    "dijit/layout/ContentPane"
+                ], function (dojo, ready, domConstruct, ContentPane) {
+                    var editorBase = dojo.config
+                        && dojo.config.paths
+                        && dojo.config.paths["webodf/editor"];
+
+                    runtime.assert(editorBase, "webodf/editor path not defined in dojoConfig");
+                    ready(function () {
+                        contentPane = new ContentPane({
+                            title: runtime.tr("editLink"),
+                            href: editorBase+"/widgets/dialogWidgets/editHyperlinkPane.html",
+                            preload: true,
+                            onLoad : function () {
+                                form = dijit.byId('editHyperlinkPaneForm');
+                                form.onSubmit = onSave;
+                                dijit.byId('cancelHyperlinkChangeButton').onClick = onCancel;
+                                displayTextField = dijit.byId('linkDisplayText');
+                                runtime.translateContent(form.domNode);
+                                if (initialValue) {
+                                    form.set('value', initialValue);
+                                    displayTextField.set('disabled', initialValue.isReadOnlyText);
+                                    initialValue = undefined;
+                                }
+                            }
+                        });
+                        return cb();
+                    });
+                });
+            }
+
+            init(function () {
+                return callback(self);
+            });
         };
 
         return EditHyperlinkPane;

@@ -58,21 +58,24 @@ define("webodf/editor/widgets/editHyperlinks", [
                 odfUtils = new odf.OdfUtils(),
                 dialog;
 
-            linkEditorContent = new EditHyperlinkPane();
             dialog = new TooltipDialog({
-                title: runtime.tr("editLink"),
-                content: linkEditorContent.widget()
+                title: runtime.tr("Edit link")
+            });
+
+            linkEditorContent = new EditHyperlinkPane(function (pane) {
+                pane.widget().startup();
+                dialog.addChild(pane.widget());
             });
 
             editHyperlinkButton = new DropDownButton({
-                label: runtime.tr('editLink'),
+                label: runtime.tr('Edit link'),
                 showLabel: false,
                 iconClass: 'dijitEditorIcon dijitEditorIconCreateLink',
                 dropDown: dialog
             });
 
             removeHyperlinkButton = new Button({
-                label: runtime.tr('removeLink'),
+                label: runtime.tr('Remove link'),
                 showLabel: false,
                 disabled: true,
                 iconClass: 'dijitEditorIcon dijitEditorIconUnlink',
