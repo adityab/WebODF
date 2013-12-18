@@ -113,7 +113,7 @@ module.exports = function (config) {
             'lib/gui/DirectParagraphStyler.js',
             'lib/gui/DirectTextStyler.js',
             'lib/gui/ImageManager.js',
-            'lib/gui/TextManipulator.js',
+            'lib/gui/TextController.js',
             'lib/gui/SessionController.js',
             'lib/gui/CaretManager.js',
             'lib/gui/SessionView.js',

@@ -361,7 +361,7 @@ set(UNTYPEDLIBJSFILES
     lib/gui/HyperlinkController.js
     lib/gui/ImageManager.js
     lib/gui/SelectionController.js
-    lib/gui/TextManipulator.js
+    lib/gui/TextController.js
     lib/gui/SessionController.js
     lib/gui/CaretManager.js
     lib/gui/SessionView.js

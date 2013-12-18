@@ -46,7 +46,7 @@ runtime.loadClass("core.PositionFilter");
  * @param {!string} inputMemberId
  * @param {function(!number, !number):ops.Operation} directStyleOp
  */
-gui.TextManipulator = function TextManipulator(session, inputMemberId, directStyleOp) {
+gui.TextController = function TextController(session, inputMemberId, directStyleOp) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
@@ -259,6 +259,6 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId, directSty
 
 (function () {
     "use strict";
-    return gui.TextManipulator;
+    return gui.TextController;
 }());
 
