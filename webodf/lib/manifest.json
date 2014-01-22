@@ -184,6 +184,9 @@
         "gui/ShadowCursor.js",
         "ops/OdtCursor.js"
     ],
+    "gui/SessionConstraints.js": [
+        "core/EventNotifier.js"
+    ],
     "gui/SessionController.js": [
         "core/Async.js",
         "core/DomUtils.js",
