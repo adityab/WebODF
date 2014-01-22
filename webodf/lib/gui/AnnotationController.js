@@ -28,6 +28,7 @@
 runtime.loadClass("core.EventNotifier");
 runtime.loadClass("core.PositionFilter");
 runtime.loadClass("ops.Session");
+runtime.loadClass("gui.SessionConstraints");
 runtime.loadClass("ops.OpAddAnnotation");
 runtime.loadClass("ops.OpRemoveAnnotation");
 runtime.loadClass("gui.SelectionMover");
@@ -35,15 +36,18 @@ runtime.loadClass("gui.SelectionMover");
 /**
  * @constructor
  * @param {!ops.Session} session
+ * @param {!gui.SessionConstraints} sessionConstraints
  * @param {!string} inputMemberId
  */
-gui.AnnotationController = function AnnotationController(session, inputMemberId) {
+gui.AnnotationController = function AnnotationController(session, sessionConstraints, inputMemberId) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
         isAnnotatable = false,
         eventNotifier = new core.EventNotifier([gui.AnnotationController.annotatableChanged]),
         officens = odf.Namespaces.officens;
+
+    sessionConstraints.registerConstraint("edit.annotations.allowNonAuthorDelete", true);
 
     /**
      * @param {?Node} node  Node to start searching with
@@ -108,6 +112,16 @@ gui.AnnotationController = function AnnotationController(session, inputMemberId)
     }
 
     /**
+     * Gets the creator of an annotation.
+     * @param {!Node} annotationElement
+     * @return {string}
+     */
+    function getCreator(annotationElement) {
+        var creatorElement = annotationElement.getElementsByTagNameNS(odf.Namespaces.dcns, "creator")[0];
+        return creatorElement.textContent;
+    }
+
+    /**
      * @return {!boolean}
      */
     this.isAnnotatable = function () {
@@ -146,7 +160,14 @@ gui.AnnotationController = function AnnotationController(session, inputMemberId)
      * @return {undefined}
      */
     this.removeAnnotation = function(annotationNode) {
-        var startStep, endStep, op, moveCursor;
+        var startStep, endStep, op, moveCursor,
+            currentUserName = odtDocument.getMember(inputMemberId).getProperties().fullName;
+
+        if (sessionConstraints.getState("edit.annotations.allowNonAuthorDelete") === false) {
+            if (currentUserName !== getCreator(annotationNode)) {
+                return;
+            }
+        }
 
         // (annotationNode, 0) will report as the step just before the first step in the annotation node
         // Add 1 to this to actually get *within* the annotation

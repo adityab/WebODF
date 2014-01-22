@@ -46,6 +46,7 @@ runtime.loadClass("ops.OdtCursor");
 runtime.loadClass("ops.OpAddCursor");
 runtime.loadClass("ops.OpRemoveCursor");
 runtime.loadClass("gui.MimeDataExporter");
+runtime.loadClass("gui.SessionConstraints");
 runtime.loadClass("gui.Clipboard");
 runtime.loadClass("gui.DirectFormattingController");
 runtime.loadClass("gui.KeyboardHandler");
@@ -63,6 +64,7 @@ runtime.loadClass("gui.InputMethodEditor");
 /**
  * @constructor
  * @param {!ops.Session} session
+ * @param {!gui.SessionConstraints} sessionConstraints
  * @param {!string} inputMemberId
  * @param {!ops.OdtCursor} shadowCursor
  * @param {!{directParagraphStylingEnabled:boolean}=} args
@@ -76,12 +78,13 @@ gui.SessionController = (function () {
     /**
      * @constructor
      * @param {!ops.Session} session
+     * @param {!gui.SessionConstraints} sessionConstraints
      * @param {!string} inputMemberId
      * @param {!ops.OdtCursor} shadowCursor
      * @param {!{directParagraphStylingEnabled:boolean}=} args
      * @return {?}
      */
-    gui.SessionController = function SessionController(session, inputMemberId, shadowCursor, args) {
+    gui.SessionController = function SessionController(session, sessionConstraints, inputMemberId, shadowCursor, args) {
         var /**@type{!Window}*/window = /**@type{!Window}*/(runtime.getWindow()),
             odtDocument = session.getOdtDocument(),
             async = new core.Async(),
@@ -99,7 +102,7 @@ gui.SessionController = (function () {
             handleMouseClickTimeoutId,
             undoManager = null,
             eventManager = new gui.EventManager(odtDocument),
-            annotationController = new gui.AnnotationController(session, inputMemberId),
+            annotationController = new gui.AnnotationController(session, sessionConstraints, inputMemberId),
             directFormattingController = new gui.DirectFormattingController(session, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
             createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (directFormattingController.createCursorStyleOp),
             createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),

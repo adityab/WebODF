@@ -57,6 +57,7 @@ define("webodf/editor/EditorSession", [
     runtime.loadClass("odf.OdfUtils");
     runtime.loadClass("gui.CaretManager");
     runtime.loadClass("gui.Caret");
+    runtime.loadClass("gui.SessionConstraints");
     runtime.loadClass("gui.SessionController");
     runtime.loadClass("gui.SessionView");
     runtime.loadClass("gui.TrivialUndoManager");
@@ -97,7 +98,8 @@ define("webodf/editor/EditorSession", [
                 EditorSession.signalCommonStyleDeleted,
                 EditorSession.signalParagraphStyleModified,
                 EditorSession.signalUndoStackChanged]),
-            shadowCursor = new gui.ShadowCursor(odtDocument);
+            shadowCursor = new gui.ShadowCursor(odtDocument),
+            sessionConstraints;
 
         /**
          * @return {Array.<!string>}
@@ -635,7 +637,8 @@ define("webodf/editor/EditorSession", [
             fontStyles.appendChild(document.createTextNode(fontsCSS));
             head.appendChild(fontStyles);
 
-            self.sessionController = new gui.SessionController(session, localMemberId, shadowCursor, {
+            sessionConstraints = new gui.SessionConstraints();
+            self.sessionController = new gui.SessionController(session, sessionConstraints, localMemberId, shadowCursor, {
                 directParagraphStylingEnabled: config.directParagraphStylingEnabled
             });
             caretManager = new gui.CaretManager(self.sessionController);
@@ -643,6 +646,11 @@ define("webodf/editor/EditorSession", [
             self.sessionView = new gui.SessionView(config.viewOptions, localMemberId, session, caretManager, selectionViewManager);
             self.availableFonts = getAvailableFonts();
             selectionViewManager.registerCursor(shadowCursor, true);
+
+            // Session Constraints can be applied once the controllers are instantiated.
+            // Disallow deleting other authors' annotations.
+            sessionConstraints.setState("edit.annotations.allowNonAuthorDelete", false);
+
             // Custom signals, that make sense in the Editor context. We do not want to expose webodf's ops signals to random bits of the editor UI.
             odtDocument.subscribe(ops.OdtDocument.signalMemberAdded, onMemberAdded);
             odtDocument.subscribe(ops.OdtDocument.signalMemberUpdated, onMemberUpdated);
