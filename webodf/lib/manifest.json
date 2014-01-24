@@ -50,6 +50,7 @@
     "gui/AnnotationController.js": [
         "core/EventNotifier.js",
         "core/PositionFilter.js",
+        "gui/KeyboardHandler.js",
         "gui/SelectionMover.js",
         "gui/SessionConstraints.js",
         "odf/Namespaces.js",

@@ -107,7 +107,7 @@ gui.SessionController = (function () {
             handleMouseClickTimeoutId,
             undoManager = null,
             eventManager = new gui.EventManager(odtDocument),
-            annotationController = new gui.AnnotationController(session, sessionConstraints, inputMemberId),
+            annotationController = new gui.AnnotationController(session, sessionConstraints, keyHandler, inputMemberId),
             directFormattingController = new gui.DirectFormattingController(session, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
             createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (directFormattingController.createCursorStyleOp),
             createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
@@ -657,6 +657,9 @@ gui.SessionController = (function () {
                 return true;
             }));
 
+            // Let various controllers assign their own keybindings
+            annotationController.bindKeys();
+
             if (isMacOS) {
                 keyHandler.down.bind(keyCode.Clear, modifier.None, textController.removeCurrentSelection);
                 keyHandler.down.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleBold));
@@ -666,7 +669,6 @@ gui.SessionController = (function () {
                 keyHandler.down.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
                 keyHandler.down.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
                 keyHandler.down.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
-                keyHandler.down.bind(keyCode.C, modifier.MetaShift, annotationController.addAnnotation);
                 keyHandler.down.bind(keyCode.Z, modifier.Meta, undo);
                 keyHandler.down.bind(keyCode.Z, modifier.MetaShift, redo);
                 keyHandler.down.bind(keyCode.LeftMeta, modifier.Meta, hyperlinkClickHandler.showPointerCursor);
@@ -684,7 +686,6 @@ gui.SessionController = (function () {
                 keyHandler.down.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
                 keyHandler.down.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
                 keyHandler.down.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
-                keyHandler.down.bind(keyCode.C, modifier.CtrlAlt, annotationController.addAnnotation);
                 keyHandler.down.bind(keyCode.Z, modifier.Ctrl, undo);
                 keyHandler.down.bind(keyCode.Z, modifier.CtrlShift, redo);
                 keyHandler.down.bind(keyCode.Ctrl, modifier.Ctrl, hyperlinkClickHandler.showPointerCursor);
@@ -725,6 +726,9 @@ gui.SessionController = (function () {
             keyHandler.down.unbind(keyCode.Delete, modifier.None);
             keyHandler.down.unbind(keyCode.Tab, modifier.None);
 
+            // Let controllers unbind their keyboard shortcuts
+            annotationController.unbindKeys();
+
             if (isMacOS) {
                 keyHandler.down.unbind(keyCode.Clear, modifier.None);
                 keyHandler.down.unbind(keyCode.B, modifier.Meta);
@@ -734,7 +738,6 @@ gui.SessionController = (function () {
                 keyHandler.down.unbind(keyCode.E, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.R, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.J, modifier.MetaShift);
-                keyHandler.down.unbind(keyCode.C, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.Z, modifier.Meta);
                 keyHandler.down.unbind(keyCode.Z, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.LeftMeta, modifier.Meta);
@@ -750,7 +753,6 @@ gui.SessionController = (function () {
                 keyHandler.down.unbind(keyCode.E, modifier.CtrlShift);
                 keyHandler.down.unbind(keyCode.R, modifier.CtrlShift);
                 keyHandler.down.unbind(keyCode.J, modifier.CtrlShift);
-                keyHandler.down.unbind(keyCode.C, modifier.CtrlAlt);
                 keyHandler.down.unbind(keyCode.Z, modifier.Ctrl);
                 keyHandler.down.unbind(keyCode.Z, modifier.CtrlShift);
                 keyHandler.down.unbind(keyCode.Ctrl, modifier.Ctrl);

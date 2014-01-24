@@ -32,6 +32,7 @@ runtime.loadClass("gui.SessionConstraints");
 runtime.loadClass("ops.OpAddAnnotation");
 runtime.loadClass("ops.OpRemoveAnnotation");
 runtime.loadClass("gui.SelectionMover");
+runtime.loadClass("gui.KeyboardHandler");
 
 /**
  * @constructor
@@ -39,10 +40,11 @@ runtime.loadClass("gui.SelectionMover");
  * @param {!gui.SessionConstraints} sessionConstraints
  * @param {!string} inputMemberId
  */
-gui.AnnotationController = function AnnotationController(session, sessionConstraints, inputMemberId) {
+gui.AnnotationController = function AnnotationController(session, sessionConstraints, keyHandler, inputMemberId) {
     "use strict";
 
-    var odtDocument = session.getOdtDocument(),
+    var self = this,
+        odtDocument = session.getOdtDocument(),
         isAnnotatable = false,
         eventNotifier = new core.EventNotifier([gui.AnnotationController.annotatableChanged]),
         officens = odf.Namespaces.officens;
@@ -132,7 +134,7 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
      * Adds an annotation to the document based on the current selection
      * @return {undefined}
      */
-    this.addAnnotation = function () {
+    function addAnnotation () {
         var op = new ops.OpAddAnnotation(),
             selection = odtDocument.getCursorSelection(inputMemberId),
             length = selection.length,
@@ -152,14 +154,14 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
             name: inputMemberId + Date.now()
         });
         session.enqueue([op]);
-    };
-
+    }
+    this.addAnnotation = addAnnotation;
 
     /**
      * @param {!Node} annotationNode
      * @return {undefined}
      */
-    this.removeAnnotation = function(annotationNode) {
+    function removeAnnotation(annotationNode) {
         var startStep, endStep, op, moveCursor,
             currentUserName = odtDocument.getMember(inputMemberId).getProperties().fullName;
 
@@ -188,7 +190,8 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
             length: 0
         });
         session.enqueue([op, moveCursor]);
-    };
+    }
+    this.removeAnnotation = removeAnnotation;
 
     /**
      * @param {!string} eventid
@@ -206,6 +209,30 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
      */
     this.unsubscribe = function (eventid, cb) {
         eventNotifier.unsubscribe(eventid, cb);
+    };
+
+    /**
+     * Bind keyboard shortcuts
+     * @return {undefined}
+     */
+    this.bindKeys = function () {
+        if (keyHandler.isMacOS) {
+            keyHandler.down.bind(keyHandler.keyCode.C, keyHandler.modifier.MetaShift, self.addAnnotation);
+        } else {
+            keyHandler.down.bind(keyHandler.keyCode.C, keyHandler.modifier.CtrlAlt, self.addAnnotation);
+        }
+    };
+
+    /**
+     * Unbind keyboard shortcuts
+     * @return {undefined}
+     */
+    this.unbindKeys = function () {
+        if (keyHandler.isMacOS) {
+            keyHandler.down.unbind(keyHandler.keyCode.C, keyHandler.modifier.MetaShift);
+        } else {
+            keyHandler.down.unbind(keyHandler.keyCode.C, keyHandler.modifier.CtrlAlt);
+        }
     };
 
     /**
