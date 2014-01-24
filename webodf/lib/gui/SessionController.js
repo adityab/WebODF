@@ -299,15 +299,17 @@ gui.SessionController = (function () {
         function handlePaste(e) {
             var plainText;
 
-            if (window.clipboardData && window.clipboardData.getData) { // IE
-                plainText = window.clipboardData.getData('Text');
-            } else if (e.clipboardData && e.clipboardData.getData) { // the rest
-                plainText = e.clipboardData.getData('text/plain');
-            }
+            if(sessionConstraints.getState("edit.text.allowPlainTextPaste") === true) {
+                if (window.clipboardData && window.clipboardData.getData) { // IE
+                    plainText = window.clipboardData.getData('Text');
+                } else if (e.clipboardData && e.clipboardData.getData) { // the rest
+                    plainText = e.clipboardData.getData('text/plain');
+                }
 
-            if (plainText) {
-                textController.removeCurrentSelection();
-                session.enqueue(pasteHandler.createPasteOps(plainText));
+                if (plainText) {
+                    textController.removeCurrentSelection();
+                    session.enqueue(pasteHandler.createPasteOps(plainText));
+                }
             }
             cancelEvent(e);
         }
@@ -866,6 +868,8 @@ gui.SessionController = (function () {
         };
 
         function init() {
+            sessionConstraints.registerConstraint("edit.text.allowPlainTextPaste", true);
+
             drawShadowCursorTask = new core.ScheduledTask(updateShadowCursor, 0);
             redrawRegionSelectionTask = new core.ScheduledTask(redrawRegionSelection, 0);
 

@@ -637,6 +637,7 @@ define("webodf/editor/EditorSession", [
             fontStyles.appendChild(document.createTextNode(fontsCSS));
             head.appendChild(fontStyles);
 
+            // Initialize various components required for editing
             sessionConstraints = new gui.SessionConstraints();
             self.sessionController = new gui.SessionController(session, sessionConstraints, localMemberId, shadowCursor, {
                 directParagraphStylingEnabled: config.directParagraphStylingEnabled
@@ -650,6 +651,7 @@ define("webodf/editor/EditorSession", [
             // Session Constraints can be applied once the controllers are instantiated.
             // Disallow deleting other authors' annotations.
             sessionConstraints.setState("edit.annotations.allowNonAuthorDelete", false);
+            sessionConstraints.setState("edit.text.allowPlainTextPaste", false);
 
             // Custom signals, that make sense in the Editor context. We do not want to expose webodf's ops signals to random bits of the editor UI.
             odtDocument.subscribe(ops.OdtDocument.signalMemberAdded, onMemberAdded);
