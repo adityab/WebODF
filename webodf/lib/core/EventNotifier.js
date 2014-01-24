@@ -40,13 +40,14 @@
 
 /**
  * @constructor
- * @param {!Array.<!string>} eventIds
+ * @param {Array.<!string>=} eventIds
  */
 core.EventNotifier = function EventNotifier(eventIds) {
     "use strict";
 
     var /**@type{!Object.<!string,!Array.<!Function>>}*/
-        eventListener = {};
+        eventListener = {},
+        self = this;
 
     /**
      * @param {!string} eventId
@@ -94,15 +95,25 @@ core.EventNotifier = function EventNotifier(eventIds) {
     };
 
     /**
+     * Register an event
+     * @param {!string} eventId
+     * @return {undefined}
+     */
+    this.register = function (eventId) {
+        runtime.assert(!eventListener.hasOwnProperty(eventId), "Duplicated event ids: \"" + eventId + "\" registered more than once.");
+        eventListener[eventId] = [];
+    };
+
+    /**
      * @return {undefined}
      */
     function init() {
-        var i, eventId;
+        var i;
 
-        for (i = 0; i < eventIds.length; i += 1) {
-            eventId = eventIds[i];
-            runtime.assert(!eventListener.hasOwnProperty(eventId), "Duplicated event ids: \"" + eventId + "\" registered more than once.");
-            eventListener[eventId] = [];
+        if (eventIds) {
+            for (i = 0; i < eventIds.length; i += 1) {
+                self.register(eventIds[i]);
+            }
         }
     }
 
