@@ -38,6 +38,7 @@ runtime.loadClass("gui.KeyboardHandler");
  * @constructor
  * @param {!ops.Session} session
  * @param {!gui.SessionConstraints} sessionConstraints
+ * @param {!Object} keyHandler
  * @param {!string} inputMemberId
  */
 gui.AnnotationController = function AnnotationController(session, sessionConstraints, keyHandler, inputMemberId) {

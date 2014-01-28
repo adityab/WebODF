@@ -652,6 +652,7 @@ define("webodf/editor/EditorSession", [
             // Disallow deleting other authors' annotations.
             sessionConstraints.setState("edit.annotations.allowNonAuthorDelete", false);
             sessionConstraints.setState("edit.text.allowPlainTextPaste", false);
+            sessionConstraints.setState("edit.formatting.directParagraphStylingEnabled", true);
 
             // Custom signals, that make sense in the Editor context. We do not want to expose webodf's ops signals to random bits of the editor UI.
             odtDocument.subscribe(ops.OdtDocument.signalMemberAdded, onMemberAdded);

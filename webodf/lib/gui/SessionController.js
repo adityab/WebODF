@@ -108,7 +108,7 @@ gui.SessionController = (function () {
             undoManager = null,
             eventManager = new gui.EventManager(odtDocument),
             annotationController = new gui.AnnotationController(session, sessionConstraints, keyHandler, inputMemberId),
-            directFormattingController = new gui.DirectFormattingController(session, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
+            directFormattingController = new gui.DirectFormattingController(session, sessionConstraints, keyHandler, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
             createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (directFormattingController.createCursorStyleOp),
             createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
             textController = new gui.TextController(session, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
@@ -659,16 +659,10 @@ gui.SessionController = (function () {
 
             // Let various controllers assign their own keybindings
             annotationController.bindKeys();
+            directFormattingController.bindKeys();
 
             if (isMacOS) {
                 keyHandler.down.bind(keyCode.Clear, modifier.None, textController.removeCurrentSelection);
-                keyHandler.down.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleBold));
-                keyHandler.down.bind(keyCode.I, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleItalic));
-                keyHandler.down.bind(keyCode.U, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleUnderline));
-                keyHandler.down.bind(keyCode.L, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphLeft));
-                keyHandler.down.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
-                keyHandler.down.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
-                keyHandler.down.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
                 keyHandler.down.bind(keyCode.Z, modifier.Meta, undo);
                 keyHandler.down.bind(keyCode.Z, modifier.MetaShift, redo);
                 keyHandler.down.bind(keyCode.LeftMeta, modifier.Meta, hyperlinkClickHandler.showPointerCursor);
@@ -679,13 +673,6 @@ gui.SessionController = (function () {
                 keyHandler.up.bind(keyCode.LeftMeta, modifier.None, hyperlinkClickHandler.showTextCursor);
                 keyHandler.up.bind(keyCode.MetaInMozilla, modifier.None, hyperlinkClickHandler.showTextCursor);
             } else {
-                keyHandler.down.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleBold));
-                keyHandler.down.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleItalic));
-                keyHandler.down.bind(keyCode.U, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleUnderline));
-                keyHandler.down.bind(keyCode.L, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphLeft));
-                keyHandler.down.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
-                keyHandler.down.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
-                keyHandler.down.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
                 keyHandler.down.bind(keyCode.Z, modifier.Ctrl, undo);
                 keyHandler.down.bind(keyCode.Z, modifier.CtrlShift, redo);
                 keyHandler.down.bind(keyCode.Ctrl, modifier.Ctrl, hyperlinkClickHandler.showPointerCursor);
@@ -728,16 +715,10 @@ gui.SessionController = (function () {
 
             // Let controllers unbind their keyboard shortcuts
             annotationController.unbindKeys();
+            directFormattingController.unbindKeys();
 
             if (isMacOS) {
                 keyHandler.down.unbind(keyCode.Clear, modifier.None);
-                keyHandler.down.unbind(keyCode.B, modifier.Meta);
-                keyHandler.down.unbind(keyCode.I, modifier.Meta);
-                keyHandler.down.unbind(keyCode.U, modifier.Meta);
-                keyHandler.down.unbind(keyCode.L, modifier.MetaShift);
-                keyHandler.down.unbind(keyCode.E, modifier.MetaShift);
-                keyHandler.down.unbind(keyCode.R, modifier.MetaShift);
-                keyHandler.down.unbind(keyCode.J, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.Z, modifier.Meta);
                 keyHandler.down.unbind(keyCode.Z, modifier.MetaShift);
                 keyHandler.down.unbind(keyCode.LeftMeta, modifier.Meta);
@@ -746,13 +727,6 @@ gui.SessionController = (function () {
                 keyHandler.up.unbind(keyCode.LeftMeta, modifier.None);
                 keyHandler.up.unbind(keyCode.MetaInMozilla, modifier.None);
             } else {
-                keyHandler.down.unbind(keyCode.B, modifier.Ctrl);
-                keyHandler.down.unbind(keyCode.I, modifier.Ctrl);
-                keyHandler.down.unbind(keyCode.U, modifier.Ctrl);
-                keyHandler.down.unbind(keyCode.L, modifier.CtrlShift);
-                keyHandler.down.unbind(keyCode.E, modifier.CtrlShift);
-                keyHandler.down.unbind(keyCode.R, modifier.CtrlShift);
-                keyHandler.down.unbind(keyCode.J, modifier.CtrlShift);
                 keyHandler.down.unbind(keyCode.Z, modifier.Ctrl);
                 keyHandler.down.unbind(keyCode.Z, modifier.CtrlShift);
                 keyHandler.down.unbind(keyCode.Ctrl, modifier.Ctrl);

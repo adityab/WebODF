@@ -45,15 +45,18 @@ runtime.loadClass("ops.OpAddStyle");
 runtime.loadClass("ops.OpApplyDirectStyling");
 runtime.loadClass("ops.OpSetParagraphStyle");
 runtime.loadClass("gui.StyleHelper");
+runtime.loadClass("gui.KeyboardHandler");
+runtime.loadClass("gui.SessionConstraints")
 
 /**
  * @constructor
  * @param {!ops.Session} session
+ * @param {!gui.SessionConstraints} sessionConstraints
+ * @param {!Object} keyHandler
  * @param {!string} inputMemberId
  * @param {!odf.ObjectNameGenerator} objectNameGenerator
- * @param {!boolean} directParagraphStylingEnabled
  */
-gui.DirectFormattingController = function DirectFormattingController(session, inputMemberId, objectNameGenerator, directParagraphStylingEnabled) {
+gui.DirectFormattingController = function DirectFormattingController(session, sessionConstraints, keyHandler, inputMemberId, objectNameGenerator) {
     "use strict";
 
     var self = this,
@@ -80,7 +83,10 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         isAlignedLeftValue,
         isAlignedCenterValue,
         isAlignedRightValue,
-        isAlignedJustifiedValue;
+        isAlignedJustifiedValue,
+        // keyHandler related vars
+        modifier = keyHandler.modifier,
+        keyCode = keyHandler.keyCode;
 
     /**
      * Returns the value for a hierarchy of keys.
@@ -779,6 +785,80 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     };
 
     /**
+     * Executes the given function only on range selection only
+     * @param {!Function} fn
+     * @return {!Function}
+     */
+    function rangeSelectionOnly(fn) {
+        return function (e) {
+            var selectionType = odtDocument.getCursor(inputMemberId).getSelectionType();
+            if (selectionType === ops.OdtCursor.RangeSelection) {
+                return fn(e);
+            }
+            return true;
+        };
+    }
+
+    function bindDirectParagraphStylingShortcuts(enabled) {
+        if(keyHandler.isMacOS) {
+            keyHandler.down.bind(keyCode.L, modifier.MetaShift, rangeSelectionOnly(self.alignParagraphLeft));
+            keyHandler.down.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(self.alignParagraphCenter));
+            keyHandler.down.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(self.alignParagraphRight));
+            keyHandler.down.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(self.alignParagraphJustified));
+        } else {
+            keyHandler.down.bind(keyCode.L, modifier.CtrlShift, rangeSelectionOnly(self.alignParagraphLeft));
+            keyHandler.down.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(self.alignParagraphCenter));
+            keyHandler.down.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(self.alignParagraphRight));
+            keyHandler.down.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(self.alignParagraphJustified));
+        }
+    }
+    /**
+     * Bind keyboard shortcuts
+     * @return {undefined}
+     */
+    this.bindKeys = function () {
+        if(keyHandler.isMacOS) {
+            keyHandler.down.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(self.toggleBold));
+            keyHandler.down.bind(keyCode.I, modifier.Meta, rangeSelectionOnly(self.toggleItalic));
+            keyHandler.down.bind(keyCode.U, modifier.Meta, rangeSelectionOnly(self.toggleUnderline));
+        } else {
+            keyHandler.down.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(self.toggleBold));
+            keyHandler.down.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(self.toggleItalic));
+            keyHandler.down.bind(keyCode.U, modifier.Ctrl, rangeSelectionOnly(self.toggleUnderline));
+        }
+        if (sessionConstraints.getState("edit.formatting.directParagraphStylingEnabled") === true) {
+            bindDirectParagraphStylingShortcuts();
+        }
+        sessionConstraints.subscribe("edit.formatting.directParagraphStylingEnabled", function(enabled) {
+            if (enabled) {}
+        });
+    };
+
+    /**
+     * Unbind keyboard shortcuts
+     * @return {undefined}
+     */
+    this.unbindKeys = function () {
+        if (keyHandler.isMacOS) {
+            keyHandler.down.unbind(keyCode.B, modifier.Meta);
+            keyHandler.down.unbind(keyCode.I, modifier.Meta);
+            keyHandler.down.unbind(keyCode.U, modifier.Meta);
+            keyHandler.down.unbind(keyCode.L, modifier.MetaShift);
+            keyHandler.down.unbind(keyCode.E, modifier.MetaShift);
+            keyHandler.down.unbind(keyCode.R, modifier.MetaShift);
+            keyHandler.down.unbind(keyCode.J, modifier.MetaShift);
+        } else {
+            keyHandler.down.unbind(keyCode.B, modifier.Ctrl);
+            keyHandler.down.unbind(keyCode.I, modifier.Ctrl);
+            keyHandler.down.unbind(keyCode.U, modifier.Ctrl);
+            keyHandler.down.unbind(keyCode.L, modifier.CtrlShift);
+            keyHandler.down.unbind(keyCode.E, modifier.CtrlShift);
+            keyHandler.down.unbind(keyCode.R, modifier.CtrlShift);
+            keyHandler.down.unbind(keyCode.J, modifier.CtrlShift);
+        }
+    };
+
+    /**
      * @param {!function(!Object=)} callback, passing an error object in case of error
      * @return {undefined}
      */
@@ -801,6 +881,8 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     /*jslint emptyblock: false*/
 
     function init() {
+        sessionConstraints.registerConstraint("edit.formatting.directParagraphStylingEnabled", false);
+
         odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, onCursorAdded);
         odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, onCursorRemoved);
         odtDocument.subscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
