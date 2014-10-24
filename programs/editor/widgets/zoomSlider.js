@@ -22,76 +22,69 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global define,require*/
+/*global goog, wodo*/
 
 goog.provide("wodo.widgets.ZoomSlider");
 
 goog.require("wodo.EditorSession");
+goog.require("goog.ui.Component");
+goog.require("goog.ui.Slider");
 
-define("webodf/editor/widgets/zoomSlider", [
-    "dijit/form/HorizontalSlider",
-    "dijit/form/NumberTextBox",
-    "webodf/editor/EditorSession"],
+wodo.widgets.ZoomSlider = function () {
+    this.extremeZoomFactor = 4;
 
-    function (HorizontalSlider, NumberTextBox, EditorSession) {
-    "use strict";
+    var self = this;
 
-    // The slider zooms from -1 to +1, which corresponds
-    // to zoom levels of 1/extremeZoomFactor to extremeZoomFactor.
-    return function ZoomSlider(callback) {
-        var self = this,
-            editorSession,
-            slider,
-            extremeZoomFactor = 4;
-
-        function updateSlider(zoomLevel) {
-            slider.set('value', Math.log(zoomLevel) / Math.log(extremeZoomFactor), false);
-        }
-
-        this.setEditorSession = function(session) {
-            var zoomHelper;
-            if (editorSession) {
-                editorSession.getOdfCanvas().getZoomHelper().unsubscribe(gui.ZoomHelper.signalZoomChanged, updateSlider);
-            }
-
-            editorSession = session;
-            if (editorSession) {
-                zoomHelper = editorSession.getOdfCanvas().getZoomHelper();
-                zoomHelper.subscribe(gui.ZoomHelper.signalZoomChanged, updateSlider);
-                updateSlider(zoomHelper.getZoomLevel());
-            }
-            slider.setAttribute('disabled', !editorSession);
-        };
-
-        this.onToolDone = function () {};
-
-        // init
-        function init() {
-            slider = new HorizontalSlider({
-                name: 'zoomSlider',
-                disabled: true,
-                value: 0,
-                minimum: -1,
-                maximum: 1,
-                discreteValues: 0.01,
-                intermediateChanges: true,
-                style: {
-                    width: '150px',
-                    height: '25px',
-                    float: 'right'
-                }
-            });
-
-            slider.onChange = function (value) {
-                if (editorSession) {
-                    editorSession.getOdfCanvas().getZoomHelper().setZoomLevel(Math.pow(extremeZoomFactor, value));
-                }
-                self.onToolDone();
-            };
-
-            return callback(slider);
-        }
-
-        init();
+    this.updateSlider = function (zoomLevel) {
+        self.slider.setValue(100 * Math.log(zoomLevel) / Math.log(self.extremeZoomFactor));
+        self.thumb.setAttribute("wodo-value", Math.round(zoomLevel * 100) + "%");
     };
-});
+};
+
+wodo.widgets.ZoomSlider.prototype.setEditorSession = function (session) {
+    var self = this,
+        zoomHelper;
+
+    if (self.editorSession) {
+        self.editorSession.getOdfCanvas().getZoomHelper().unsubscribe(gui.ZoomHelper.signalZoomChanged, self.updateSlider);
+    }
+
+    self.editorSession = session;
+
+    if (self.editorSession) {
+        zoomHelper = self.editorSession.getOdfCanvas().getZoomHelper();
+        zoomHelper.subscribe(gui.ZoomHelper.signalZoomChanged, self.updateSlider);
+        self.updateSlider(zoomHelper.getZoomLevel());
+    }
+    self.slider.setEnabled(Boolean(self.editorSession));
+
+};
+
+wodo.widgets.ZoomSlider.prototype.onToolDone = function () {};
+
+wodo.widgets.ZoomSlider.prototype.render = function (parentElement) {
+    this.slider.render(parentElement);
+};
+
+wodo.widgets.ZoomSlider.prototype.createDom = function () {
+    var self = this,
+        slider = new goog.ui.Slider;
+
+    slider.setOrientation(goog.ui.Slider.Orientation.HORIZONTAL);
+    slider.setBlockIncrement(1);
+    slider.setStep(null);
+    slider.setMinimum(-100);
+    slider.setMaximum(100);
+    slider.setEnabled(true);
+    slider.createDom();
+
+    slider.addEventListener(goog.ui.Component.EventType.CHANGE, function () {
+        if (self.editorSession) {
+            self.editorSession.getOdfCanvas().getZoomHelper().setZoomLevel(Math.pow(self.extremeZoomFactor, slider.getValue() / 100));
+            self.onToolDone();
+        }
+    });
+
+    self.slider = slider;
+    self.thumb = slider.getElementByClass(goog.ui.Slider.THUMB_CSS_CLASS);
+};
