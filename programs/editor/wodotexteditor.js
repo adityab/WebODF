@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+goog.provide("wodo.TextEditor");
+
 /**
  * Namespace of the Wodo.TextEditor
  * @namespace
@@ -151,6 +153,11 @@ var Wodo = Wodo || (function () {
             @type {!string} */
         EVENT_METADATACHANGED = "metadataChanged";
 
+
+    goog.require("wodo.FullWindowZoomHelper");
+    goog.require("wodo.EditorSession");
+    goog.require("wodo.Tools");
+    goog.require("wodo.Translator");
 
     /**
      * @return {undefined}

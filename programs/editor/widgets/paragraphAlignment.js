@@ -24,6 +24,10 @@
 
 /*global define,require,ops,gui */
 
+goog.provide("wodo.widgets.ParagraphAlignment");
+
+goog.require("wodo.EditorSession");
+
 define("webodf/editor/widgets/paragraphAlignment", [
     "dijit/form/ToggleButton",
     "dijit/form/Button",

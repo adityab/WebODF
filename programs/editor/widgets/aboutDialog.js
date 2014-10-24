@@ -24,6 +24,8 @@
 
 /*global define,require,webodf */
 
+goog.provide("wodo.widgets.AboutDialog");
+
 define("webodf/editor/widgets/aboutDialog", ["dijit/Dialog"], function (Dialog) {
     "use strict";
 

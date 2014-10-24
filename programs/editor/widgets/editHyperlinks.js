@@ -24,6 +24,11 @@
 
 /*global define,require,document,odf */
 
+goog.provide("wodo.widgets.EditHyperlinks");
+
+goog.require("wodo.EditorSession");
+goog.require("wodo.widgets.EditHyperlinkPane");
+
 define("webodf/editor/widgets/editHyperlinks", [
     "webodf/editor/EditorSession",
     "webodf/editor/widgets/dialogWidgets/editHyperlinkPane",

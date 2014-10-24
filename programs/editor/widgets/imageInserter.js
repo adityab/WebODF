@@ -24,6 +24,10 @@
 
 /*global define,require,document,Image,FileReader,window,runtime,ops */
 
+goog.provide("wodo.widgets.ImageInserter");
+
+goog.require("wodo.EditorSession");
+
 define("webodf/editor/widgets/imageInserter", [
     "dijit/form/Button",
     "webodf/editor/EditorSession"],

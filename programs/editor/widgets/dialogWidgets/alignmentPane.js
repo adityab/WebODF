@@ -24,6 +24,10 @@
 
 /*global runtime,core,define,require,dijit */
 
+goog.provide("wodo.widgets.AlignmentPane");
+
+goog.require("wodo.widgets.IdMangler");
+
 define("webodf/editor/widgets/dialogWidgets/alignmentPane", [
     "webodf/editor/widgets/dialogWidgets/idMangler"],
 function (IdMangler) {

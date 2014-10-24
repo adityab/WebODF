@@ -24,6 +24,10 @@
 
 /*global runtime,core,define,require,document,dijit */
 
+goog.provide("wodo.widgets.EditHyperlinkPane");
+
+goog.require("wodo.widgets.IdMangler");
+
 define("webodf/editor/widgets/dialogWidgets/editHyperlinkPane", [
     "dojo",
     "dijit/layout/ContentPane",

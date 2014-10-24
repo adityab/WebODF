@@ -24,6 +24,8 @@
 
 /*global define, require */
 
+goog.provide("wodo.widgets.Annotation");
+
 define("webodf/editor/widgets/annotation", [
     "dijit/form/Button"],
 

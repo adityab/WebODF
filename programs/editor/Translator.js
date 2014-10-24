@@ -24,6 +24,8 @@
 
 /*global define, runtime, XMLHTTPRequest */
 
+goog.provide("wodo.Translator");
+
 define("webodf/editor/Translator", [], function () {
     "use strict";
 

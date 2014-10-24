@@ -24,6 +24,19 @@
 
 /*global define,document,require,ops */
 
+goog.provide("wodo.Tools");
+
+goog.require("wodo.widgets.ParagraphAlignment");
+goog.require("wodo.widgets.SimpleStyles");
+goog.require("wodo.widgets.UndoRedoMenu");
+goog.require("wodo.widgets.CurrentStyle");
+goog.require("wodo.widgets.Annotation");
+goog.require("wodo.widgets.EditHyperlinks");
+goog.require("wodo.widgets.ImageInserter");
+goog.require("wodo.widgets.ParagraphStylesDialog");
+goog.require("wodo.widgets.ZoomSlider");
+goog.require("wodo.widgets.AboutDialog");
+
 define("webodf/editor/Tools", [
     "dojo/ready",
     "dijit/MenuItem",

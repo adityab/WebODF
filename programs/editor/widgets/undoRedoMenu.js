@@ -24,6 +24,10 @@
 
 /*global define,require*/
 
+goog.provide("wodo.widgets.UndoRedoMenu");
+
+goog.require("wodo.EditorSession");
+
 define("webodf/editor/widgets/undoRedoMenu",
     ["webodf/editor/EditorSession", "dijit/form/Button"],
 

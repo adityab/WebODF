@@ -24,6 +24,10 @@
 
 /*global define,require*/
 
+goog.provide("wodo.widgets.ZoomSlider");
+
+goog.require("wodo.EditorSession");
+
 define("webodf/editor/widgets/zoomSlider", [
     "dijit/form/HorizontalSlider",
     "dijit/form/NumberTextBox",

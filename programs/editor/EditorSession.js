@@ -24,6 +24,8 @@
 
 /*global define, runtime, core, gui, ops, document */
 
+goog.provide("wodo.EditorSession");
+
 define("webodf/editor/EditorSession", [
     "dojo/text!resources/fonts/fonts.css"
 ], function (fontsCSS) { // fontsCSS is retrieved as a string, using dojo's text retrieval AMD plugin

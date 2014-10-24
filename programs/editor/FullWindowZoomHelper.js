@@ -25,6 +25,8 @@
 
 /*global define, document, window */
 
+goog.provide("wodo.FullWindowZoomHelper");
+
 define("webodf/editor/FullWindowZoomHelper", [], function () {
     "use strict";
 
