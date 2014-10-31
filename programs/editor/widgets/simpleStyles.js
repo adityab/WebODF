@@ -30,12 +30,11 @@ goog.require("wodo.EditorSession");
 goog.require("wodo.widgets.FontPicker");
 
 define("webodf/editor/widgets/simpleStyles", [
-    "webodf/editor/widgets/fontPicker",
     "dijit/form/ToggleButton",
     "dijit/form/NumberSpinner",
     "webodf/editor/EditorSession"],
 
-    function (FontPicker, ToggleButton, NumberSpinner, EditorSession) {
+    function (ToggleButton, NumberSpinner, EditorSession) {
         "use strict";
 
         var SimpleStyles = function(callback) {
@@ -48,8 +47,7 @@ define("webodf/editor/widgets/simpleStyles", [
                 underlineButton,
                 strikethroughButton,
                 fontSizeSpinner,
-                fontPicker,
-                fontPickerWidget;
+                fontPicker;
 
             boldButton = new ToggleButton({
                 label: runtime.tr('Bold'),
@@ -121,24 +119,30 @@ define("webodf/editor/widgets/simpleStyles", [
                 }
             });
 
-            fontPicker = new FontPicker(function () {});
-            fontPickerWidget = fontPicker.widget();
-            fontPickerWidget.setAttribute('disabled', true);
-            fontPickerWidget.onChange = function(value) {
-                directFormattingController.setFontName(value);
+            fontPicker = new wodo.widgets.FontPicker();
+            goog.events.listen(fontPicker, wodo.widgets.FontPicker.EventType.CHANGE,
+                function(e) {
+                directFormattingController.setFontName(e.target.value);
                 self.onToolDone();
-            };
+            });
 
-            widget.children = [boldButton, italicButton, underlineButton, strikethroughButton, fontPickerWidget, fontSizeSpinner];
+            widget.children = [boldButton, italicButton, underlineButton, strikethroughButton, fontPicker, fontSizeSpinner];
             widget.startup = function () {
                 widget.children.forEach(function (element) {
-                    element.startup();
+                    element.startup && element.startup();
                 });
             };
 
             widget.placeAt = function (container) {
                 widget.children.forEach(function (element) {
-                    element.placeAt(container);
+                    if (element.placeAt) {
+                        // Dojo Widget
+                        element.placeAt(container);
+                    } else {
+                        // Closure widget
+                        element.createDom();
+                        element.render(container.domNode);
+                    }
                 });
                 return widget;
             };
@@ -155,7 +159,7 @@ define("webodf/editor/widgets/simpleStyles", [
                         fontSizeSpinner.set('value', value, false);
                         fontSizeSpinner.set('intermediateChanges', true);
                     },
-                    fontName: function(value) { fontPickerWidget.set('value', value, false); }
+                    fontName: function(value) { fontPicker.setValue(value); }
                 };
 
                 Object.keys(changes).forEach(function (key) {
@@ -168,7 +172,7 @@ define("webodf/editor/widgets/simpleStyles", [
 
             function enableStyleButtons(enabledFeatures) {
                 widget.children.forEach(function (element) {
-                    element.setAttribute('disabled', !enabledFeatures.directTextStyling);
+                    element.setAttribute && element.setAttribute('disabled', !enabledFeatures.directTextStyling);
                 });
             }
 

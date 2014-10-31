@@ -118,9 +118,8 @@ function (IdMangler) {
                 "dojo/ready",
                 "dojo/dom-construct",
                 "dijit/layout/ContentPane",
-                "dojox/widget/ColorPicker",
-                "webodf/editor/widgets/fontPicker"
-            ], function (dojo, ready, domConstruct, ContentPane, ColorPicker, FontPicker) {
+                "dojox/widget/ColorPicker"
+            ], function (dojo, ready, domConstruct, ContentPane, ColorPicker) {
                 var editorBase = dojo.config && dojo.config.paths &&
                             dojo.config.paths['webodf/editor'];
                 runtime.assert(editorBase, "webodf/editor path not defined in dojoConfig");
@@ -151,12 +150,10 @@ function (IdMangler) {
                             backgroundColorTB.set('value', value);
                         };
 
-                        fontPicker = new FontPicker(function (picker) {
-                            picker.widget().startup();
-                            idMangler.getElementById('fontPicker').appendChild(picker.widget().domNode);
-                            picker.widget().name = 'fontName';
-                            picker.setEditorSession(editorSession);
-                        });
+                        fontPicker = new wodo.widgets.FontPicker();
+                        fontPicker.createDom();
+                        fontPicker.render(idMangler.getElementById('fontPicker'));
+                        fontPicker.setEditorSession(editorSession);
 
                         // Automatically update preview when selections change
                         form.watch('value', function () {

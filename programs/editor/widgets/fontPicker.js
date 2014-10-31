@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 KO GmbH <copyright@kogmbh.com>
+ * Copyright (C) 2012-2014 KO GmbH <copyright@kogmbh.com>
  *
  * @licstart
  * This file is part of WebODF.
@@ -25,106 +25,109 @@
 
 goog.provide("wodo.widgets.FontPicker");
 
-define("webodf/editor/widgets/fontPicker", [
-    "dijit/form/Select"],
+goog.require("wodo.EditorSession");
+goog.require("goog.ui.Select");
+goog.require("goog.ui.Option");
+goog.require("goog.ui.FlatMenuButtonRenderer");
+goog.require("goog.events");
+goog.require("goog.events.EventTarget");
 
-    function (Select) {
-        "use strict";
+wodo.widgets.FontPicker = function () {
+    goog.events.EventTarget.call(this);
 
-        /**
-         * @constructor
-         */
-        var FontPicker = function (callback) {
-            var self = this,
-                editorSession,
-                select,
-                documentFonts = [];
+    var self = this;
 
-            select = new Select({
-                name: 'FontPicker',
-                disabled: true,
-                maxHeight: 200,
-                style: {
-                    width: '150px'
-                }
-            });
+    this.documentFonts = [];
 
-            this.widget = function () {
-                return select;
-            };
+    function populateFonts() {
+        var i,
+            name,
+            family,
+            editorSession = self.editorSession,
+            editorFonts = editorSession.availableFonts,
+            documentFonts = editorSession.getDeclaredFonts(),
+            widget = self.widget;
 
-            this.value = function () {
-                return select.get('value');
-            };
+        self.documentFonts = documentFonts;
 
-            this.setValue = function (value) {
-                select.set('value', value);
-            };
+        for (i = 0; i < widget.getItemCount(); i += 1) {
+            widget.removeItemAt(0);
+        }
 
-            /**
-             * Returns the font family for a given font name. If unavailable,
-             * return the name itself (e.g. editor fonts won't have a name-family separation
-             * @param {!string} name
-             * @return {!string}
-             */
-            this.getFamily = function (name) {
-                var i;
-                for (i = 0; i < documentFonts.length; i += 1) {
-                    if ((documentFonts[i].name === name) && documentFonts[i].family) {
-                        return documentFonts[i].family;
-                    }
-                }
-                return name;
-            };
-            // events
-            this.onAdd = null;
-            this.onRemove = null;
+        // First populate the fonts used in the document
+        for (i = 0; i < documentFonts.length; i += 1) {
+            name = documentFonts[i].name;
+            family = documentFonts[i].family || name;
+            widget.addItem(new goog.ui.Option(
+                goog.dom.htmlToDocumentFragment('<span style="font-family: ' + family + ';">' + name + '</span>'),
+                name
+            ));
+        }
+        if (editorFonts.length) {
+            // Then add a separator
+            widget.addItem(new goog.ui.Separator());
+        }
+        // Lastly populate the fonts provided by the editor
+        for (i = 0; i < editorFonts.length; i += 1) {
+            widget.addItem((
+                goog.dom.htmlToDocumentFragment('<span style="font-family: ' + editorFonts[i] + ';">' + editorFonts[i] + '</span>'),
+                editorFonts[i]
+            ));
+        }
+    }
+    this.populateFonts = populateFonts;
+};
 
-            function populateFonts() {
-                var i,
-                    name,
-                    family,
-                    editorFonts = editorSession ? editorSession.availableFonts : [],
-                    selectionList = [];
+goog.inherits(wodo.widgets.FontPicker, goog.events.EventTarget);
 
-                documentFonts = editorSession ? editorSession.getDeclaredFonts() : [];
+wodo.widgets.FontPicker.prototype.render = function (parentElement) {
+    this.widget.render(parentElement);
+};
 
-                // First populate the fonts used in the document
-                for (i = 0; i < documentFonts.length; i += 1) {
-                    name = documentFonts[i].name;
-                    family = documentFonts[i].family || name;
-                    selectionList.push({
-                        label: '<span style="font-family: ' + family + ';">' + name + '</span>',
-                        value: name
-                    });
-                }
-                if (editorFonts.length) {
-                    // Then add a separator
-                    selectionList.push({
-                        type: 'separator'
-                    });
-                }
-                // Lastly populate the fonts provided by the editor
-                for (i = 0; i < editorFonts.length; i += 1) {
-                    selectionList.push({
-                        label: '<span style="font-family: ' + editorFonts[i] + ';">' + editorFonts[i] + '</span>',
-                        value: editorFonts[i]
-                    });
-                }
+wodo.widgets.FontPicker.prototype.createDom = function () {
+    var self = this,
+        widget;
 
-                select.removeOption(select.getOptions());
-                select.addOption(selectionList);
-            }
+    widget = new goog.ui.Select(null, null, goog.ui.FlatMenuButtonRenderer.getInstance());
+    widget.createDom();
 
-            this.setEditorSession = function(session) {
-                editorSession = session;
-                populateFonts();
-                select.setAttribute('disabled', !editorSession);
-            };
-            populateFonts();
+    goog.events.listen(widget, goog.ui.Component.EventType.CHANGE, function () {
+        self.dispatchEvent(new goog.events.Event(wodo.widgets.FontPicker.EventType.CHANGE, {
+            value: self.getValue()
+        }));
+    });
 
-            callback(self);
-        };
+    self.widget = widget;
+};
 
-        return FontPicker;
-});
+wodo.widgets.FontPicker.prototype.setEditorSession = function (session) {
+    this.editorSession = session;
+    if (this.editorSession) {
+        this.populateFonts();
+    }
+    this.widget.setEnabled(Boolean(this.editorSession));
+};
+
+wodo.widgets.FontPicker.prototype.getValue = function () {
+    return this.widget.getValue();
+};
+
+wodo.widgets.FontPicker.prototype.setValue = function (value) {
+    this.widget.setValue(value);
+};
+
+wodo.widgets.FontPicker.prototype.getFamily = function (name) {
+    var documentFonts = this.documentFonts,
+        i;
+
+    for (i = 0; i < documentFonts.length; i += 1) {
+        if ((documentFonts[i].name === name) && documentFonts[i].family) {
+            return documentFonts[i].family;
+        }
+    }
+    return name;
+};
+
+wodo.widgets.FontPicker.EventType = {
+    CHANGE: "change"
+};
