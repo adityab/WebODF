@@ -639,6 +639,8 @@ define("webodf/editor/EditorSession", [
             odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
             odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, trackCurrentParagraph);
             odtDocument.subscribe(ops.OdtDocument.signalUndoStackChanged, undoStackModified);
+
+            wodo.EditorSession = EditorSession;
         }
 
         init();

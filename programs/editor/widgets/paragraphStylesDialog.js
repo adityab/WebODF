@@ -160,7 +160,7 @@ function (IdMangler) {
                 }
 
                 function accept() {
-                    editorSession.updateParagraphStyle(stylePicker.value(), {
+                    editorSession.updateParagraphStyle(stylePicker.getValue(), {
                         "style:paragraph-properties": mappedProperties(
                                                         updatedProperties(originalAlignmentPaneValue, alignmentPane.value()),
                                                         paragraphPropertyMapping
@@ -179,7 +179,7 @@ function (IdMangler) {
                 }
 
                 function setStyle(value) {
-                    if (value !== stylePicker.value()) {
+                    if (value !== stylePicker.getValue()) {
                         stylePicker.setValue(value);
                     }
 
@@ -235,7 +235,7 @@ function (IdMangler) {
                 cloneButton = new Button({
                     label: tr("Create"),
                     onClick: function () {
-                        cloneStyle(stylePicker.value(), cloneTooltip.get('value').name);
+                        cloneStyle(stylePicker.getValue(), cloneTooltip.get('value').name);
                         cloneTooltip.reset();
                         popup.close(cloneTooltip);
                     }
@@ -256,7 +256,7 @@ function (IdMangler) {
                     iconClass: 'dijitEditorIcon dijitEditorIconDelete',
                     style: "float: right; margin-bottom: 5px;",
                     onClick: function () {
-                        deleteStyle(stylePicker.value());
+                        deleteStyle(stylePicker.getValue());
                     }
                 });
                 topBar.addChild(deleteButton, 2);
@@ -286,31 +286,22 @@ function (IdMangler) {
                 goog.require("wodo.widgets.FontEffectsPane");
 
                 require([
-                    "webodf/editor/widgets/paragraphStyles",
                     "webodf/editor/widgets/dialogWidgets/alignmentPane",
                     "webodf/editor/widgets/dialogWidgets/fontEffectsPane"
-                ], function (ParagraphStyles, AlignmentPane, FontEffectsPane) {
-                    var p, a, f;
+                ], function (AlignmentPane, FontEffectsPane) {
+                    var a, f;
 
-                    p = new ParagraphStyles(function (paragraphStyles) {
-                        stylePicker = paragraphStyles;
-                        stylePicker.widget().startup();
-                        stylePicker.widget().domNode.style.float = "left";
-                        stylePicker.widget().domNode.style.width = "350px";
-                        stylePicker.widget().domNode.style.marginTop = "5px";
-                        topBar.addChild(stylePicker.widget(), 0);
+                    stylePicker = new wodo.widgets.ParagraphStyles();
+                    stylePicker.createDom();
+                    stylePicker.render(topBar.domNode);
 
-                        stylePicker.onRemove = function (name) {
-                            // The style picker automatically falls back
-                            // to the first entry if the currently selected
-                            // entry is deleted. So it is safe to simply
-                            // open the new auto-selected entry after removal.
-                            setStyle(stylePicker.value());
-                        };
-
-                        stylePicker.onChange = setStyle;
-                        stylePicker.setEditorSession(editorSession);
+                    goog.events.listen(stylePicker,
+                        wodo.widgets.ParagraphStyles.EventType.CHANGE,
+                        function (e) {
+                            setStyle(e.target.value);
                     });
+                    stylePicker.setEditorSession(editorSession);
+
                     a = new AlignmentPane(function (pane) {
                         alignmentPane = pane;
                         alignmentPane.widget().startup();

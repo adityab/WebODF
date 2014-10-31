@@ -47,14 +47,13 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/paragraphAlignment",
     "webodf/editor/widgets/simpleStyles",
     "webodf/editor/widgets/undoRedoMenu",
-    "webodf/editor/widgets/toolbarWidgets/currentStyle",
     "webodf/editor/widgets/annotation",
     "webodf/editor/widgets/editHyperlinks",
     "webodf/editor/widgets/imageInserter",
     "webodf/editor/widgets/paragraphStylesDialog",
     "webodf/editor/widgets/aboutDialog",
     "webodf/editor/EditorSession"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, AboutDialog, EditorSession) {
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, AboutDialog, EditorSession) {
         "use strict";
 
         return function Tools(toolbarElementId, args) {
@@ -206,7 +205,7 @@ define("webodf/editor/Tools", [
                 paragraphAlignment = createTool(ParagraphAlignment, args.directParagraphStylingEnabled);
 
                 // Paragraph Style Selector
-                currentStyle = createTool(CurrentStyle, args.paragraphStyleSelectingEnabled);
+                currentStyle = createWidget(wodo.widgets.CurrentStyle, args.paragraphStyleSelectingEnabled);
 
                 // Zoom Level Selector
                 zoomSlider = createWidget(wodo.widgets.ZoomSlider, args.zoomingEnabled);
