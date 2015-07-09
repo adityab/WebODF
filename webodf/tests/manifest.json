@@ -202,6 +202,7 @@
         "odf.Namespaces",
         "odf.OdfCanvas",
         "odf.OdfNodeFilter",
+        "ops.Member",
         "ops.OdtCursor",
         "ops.OdtDocument",
         "xmldom.LSSerializer",
