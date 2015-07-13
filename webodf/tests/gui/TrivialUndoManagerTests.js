@@ -32,11 +32,13 @@
 gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
     "use strict";
     var t, testarea,
-        r = runner;
+        r = runner,
+        member,
+        cursor;
 
-    function cursor(id) {
-        return { getMemberId: function () { return id; } };
-    }
+        cursor = member = function (id) {
+            return { getMemberId: function () { return id; } };
+        };
 
     /**
      * @param rootElement
@@ -61,11 +63,9 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
         this.setRootElement = noOp;
         this.setOdfContainer = noOp;
         this.cursors = [cursor("1")];
-        this.getMemberIds = function () {
-            return self.cursors.map(function (cursor) {
-                return cursor.getMemberId();
-            });
-        };
+        this.members = [member("1")];
+        this.getMemberIds = function () { return ["1"]; };
+        this.getCursor = function (memberid) { return self.cursors[0]; };
         this.getDocumentElement = function () { return rootElement; };
         this.getRootNode = function () { return rootElement; };
         this.getDOMDocument = function () { return rootElement.ownerDocument; };

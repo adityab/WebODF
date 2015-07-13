@@ -91,6 +91,12 @@ ops.Document.prototype.createRootFilter = function (inputMemberId) { "use strict
  * @return {!core.PositionIterator}
  */
 ops.Document.prototype.createPositionIterator = function (rootNode) { "use strict"; };
+/**
+ * @param {!string} memberid
+ * @return {ops.OdtCursor}
+ */
+ops.Document.prototype.getCursor = function (memberid) { "use strict"; };
+
 /**@const*/
 ops.Document.signalCursorAdded =   "cursor/added";
 /**@const*/
